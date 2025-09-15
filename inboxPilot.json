@@ -1,0 +1,246 @@
+{
+  "name": "InboxGuardian_1",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Parse the first candidate (or all if you want)\nconst items = [\n  { json: JSON.parse($json.candidates[0].content.parts[0].text) }\n];\n\n// Convert 'keep' boolean to string\nreturn items.map(item => {\n  if (item.json.keep !== undefined) {\n    item.json.keep = item.json.keep.toString(); // true -> \"true\", false -> \"false\"\n  }\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "2d17ca5b-1306-467d-aaf1-21df01168803",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discordapp.com/api/webhooks/1411354432813273128/UWcYNNV3FXatwYlFcA7b-Md3Re1XvwN-Gl_vW1HPsPlKUk4tPp7KtU3D3_WKsvL4kbQN",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"Message ID: {{ $json.message_id }}\\nDate: {{ $json.date }}\\nFrom: {{ $json.from.replaceAll('\\\"','\\\\\\\"') }}\\nSubject: {{ $json.subject }}\\nClassifier: {{ $json.classifier }}\\nKeep: {{ $json.keep }}\\nReason: {{ $json.reason.replaceAll('\\\"','\\\\\\\"') }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -128
+      ],
+      "id": "29b5b64c-5da8-4c92-b5f7-e653903deec5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "11408c8f-0c60-4fd7-aba5-7e87a95a78a7",
+              "leftValue": "={{$json.keep}}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        -32
+      ],
+      "id": "16c4f16a-bf20-4484-971e-0ac885c5c5d7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{$json[\"message_id\"]}}\n"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        64
+      ],
+      "id": "55b90590-d2eb-4b11-9e64-7e363c3120b5",
+      "name": "Delete a message",
+      "webhookId": "b707213c-995e-44bc-93fb-728580618909",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gLFmc9qLyZJqFuxt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -784,
+        -32
+      ],
+      "id": "d56adc93-e335-4ccf-973a-f6b3b4b749aa",
+      "name": "Get many messages",
+      "webhookId": "bdfd35a9-39de-44a1-b9ee-95d7fdd3026c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gLFmc9qLyZJqFuxt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an email classifier AI.  \nYou will receive the following email fields:\n\n- Message ID: \"{{ $json.id }}\"\n- Date: \"{{ $json.internalDate }}\"\n- From: \"{{ $json.From }}\"\n- Subject: \"{{ $json.Subject }}\"\n\nYour task:\n1. Analyze the email and decide its **category** (classifier). Possible values:\n   - \"otp\" → one-time passcodes, verification codes, 2FA\n   - \"security_alert\" → suspicious login, password reset, blocked sign-in, unusual activity\n   - \"career\" → internship, scholarship, hiring, job application, vacancy, offer letter\n   - \"finance\" → billing, invoices, payments, receipts, bank alerts\n   - \"transactional\" → order confirmations, shipping updates, tickets, reservations\n   - \"personal\" → from friends, family, direct personal messages\n   - \"promotional\" → newsletters, ads, sales, coupons, marketing emails\n   - \"other\" → anything else not fitting the above\n\n2. Decide whether the email should be **kept** or **deleted**.  \n   - **Delete ONLY if category is `promotional`.**  \n   - **Keep all other categories (`otp`, `security_alert`, `career`, `finance`, `transactional`, `personal`, `other`).**\n\n3. Output only valid JSON with the following fields:\n\n```json\n{\n  \"message_id\": \"{{ $json.id }}\",\n  \"date\": \"{{ $json.internalDate }}\",\n  \"from\": \"{{ $json.From  }}\",\n  \"subject\": \"{{ $json.Subject }}\",\n  \"classifier\": \"<one of the categories above>\",\n  \"keep\": true,\n  \"reason\": \"<short explanation of why it is classified this way>\"\n}\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -32
+      ],
+      "id": "3685a423-ae20-470f-9f5b-3c0256daa0cb",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jtfqlyFxgKzF9AXW",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1008,
+        -32
+      ],
+      "id": "6d8c1959-b055-4865-a84e-e071731058ba",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "5fdc771b-af1f-489c-8b93-4fd289f6405e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "199ac88cd464bd29e376321a6b7a3a561815ac8ab969ffc6f362f950ae96b4f2"
+  },
+  "id": "f2JHE9jUglct2Gm1",
+  "tags": []
+}
