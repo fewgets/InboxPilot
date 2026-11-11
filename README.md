@@ -1,124 +1,123 @@
+<!-- InboxPilot · README by Usama Shahid (fewgets) -->
+<div align="center">
 
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,55:0F3D3E,100:36FFC7&height=230&section=header&text=InboxPilot&fontSize=60&fontColor=FFFFFF&fontAlignY=36&desc=AI%20email%20triage%20on%20autopilot%20with%20n8n%20and%20Gemini&descSize=17&descAlignY=58&animation=fadeIn" width="100%" alt="InboxPilot"/>
 
-# 📬 InboxPilot - Smart Email Classifier & Cleaner (n8n + Gemini AI)
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=700&color=36FFC7&center=true&vCenter=true&width=720&height=60&lines=Classifies+Every+Email+with+AI;Deletes+Promotions+Automatically;Pings+Discord+for+What+Matters" alt="Typing SVG"/>
 
-> **InboxPilot** is an automation workflow built in **n8n** that uses **Google Gemini AI** to classify incoming Gmail messages, automatically delete unwanted promotional emails, and forward important email details to **Discord** for instant notifications.
+<p>
+  <img src="https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white" alt="n8n"/>
+  <img src="https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini"/>
+  <img src="https://img.shields.io/badge/Gmail%20API-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail API"/>
+  <img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"/>
+</p>
+
+</div>
+
+---
+## 📌 Overview
+
+**InboxPilot** is an **n8n** automation that keeps your Gmail inbox clean on its own. Every
+2 minutes it reads new unread emails and asks **Google Gemini** to classify each one:
+
+- 🗑️ **Promotional?** It's **deleted automatically**.
+- 🔔 **Anything important?** A short summary (sender, subject, category, reason) is sent to your **Discord** channel.
+
+No more digging through spam to find the OTP, the job reply or the bank alert you actually needed.
 
 ---
 
-## 📌 Project Summary
+## ✨ Features
 
-InboxPilot connects to Gmail, scans unread messages, and passes them to Google Gemini for classification. Emails are categorized into **otp, security\_alert, career, finance, transactional, personal, promotional, other**.
-
-* If classified as **promotional** → the email is automatically deleted.
-* Otherwise → a notification with details (sender, subject, reason) is sent to a **Discord channel**.
-
-This workflow runs every **2 minutes** via a schedule trigger, keeping your inbox clean and important messages visible.
+| | Feature |
+|:-:|---|
+| 📥 | Fetches unread emails from Gmail (OAuth2) |
+| 🧠 | AI classification with **Gemini 2.5 Flash-Lite** |
+| 🏷️ | 8 categories: `otp`, `security_alert`, `career`, `finance`, `transactional`, `personal`, `promotional`, `other` |
+| 🗑️ | Promotional emails deleted automatically |
+| 🔔 | Important emails pushed to Discord instantly |
+| ⏱️ | Runs every 2 minutes in the background, fully hands-off |
 
 ---
 
-## ⚙️ Features
+## 🔄 Workflow
 
-* 📥 **Fetch Unread Emails** from Gmail
-* 🧠 **AI-Powered Classification** using Google Gemini
-* 🗑 **Auto-Delete Promotional Emails**
-* 🔔 **Discord Notifications** for important emails
-* ⏳ **Scheduled Execution** every 2 minutes
-* ⚡ 100% Automated, runs in the background
+```mermaid
+flowchart LR
+    T[⏱️ Schedule<br/>every 2 min] --> G[📥 Gmail<br/>unread emails]
+    G --> AI[🧠 Gemini<br/>classify]
+    AI --> C{Promotional?}
+    C -->|Yes| D[🗑️ Delete email]
+    C -->|No| F[📝 Format details]
+    F --> DC[🔔 Discord webhook]
+```
+
+---
+
+## ⚙️ Setup
+
+### 1. Gmail API (OAuth2)
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the **Gmail API**.
+2. Create **OAuth2 credentials** (web application) with this redirect URI:
+   `http://localhost:5678/rest/oauth2-credential/callback` (adjust for your n8n host).
+3. In n8n, add a **Gmail OAuth2** credential and authorise your account.
+
+### 2. Google Gemini
+1. Create an API key in [Google AI Studio](https://aistudio.google.com/).
+2. In n8n, add a **Google Gemini (PaLM)** credential.
+
+### 3. Discord
+1. In your server: **Channel Settings → Integrations → Webhooks → New Webhook**.
+2. Paste the webhook URL into the workflow's **HTTP Request** node.
+
+### 4. Import and activate
+1. In n8n: **Workflows → Import** → `inboxPilot.json`.
+2. Connect the three credentials, adjust the schedule if you like, and **activate**.
 
 ---
 
 ## 🧰 Tech Stack
 
-| Component         | Tool / Service        |
-| ----------------- | --------------------- |
-| Automation Engine | [n8n](https://n8n.io) |
-| Email Service     | Gmail (OAuth2)        |
-| AI Classifier     | Google Gemini (PaLM)  |
-| Notifications     | Discord Webhook       |
+| Component | Tool |
+|---|---|
+| Automation | [n8n](https://n8n.io) |
+| Email | Gmail API (OAuth2) |
+| AI | Google Gemini 2.5 Flash-Lite |
+| Notifications | Discord webhooks |
 
----
-
-## 🗂 Folder Structure
-
-```bash
+```text
 InboxPilot/
-├── inboxPilot.json     # n8n workflow export
-└── README.md           # Documentation
+├── inboxPilot.json   # n8n workflow export
+└── README.md
 ```
 
 ---
 
-## 📝 Setup Instructions
+## 🤝 Let's Work Together
 
-### 1) Gmail API (OAuth2)
+<div align="center">
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a project → Enable **Gmail API**.
-3. Create **OAuth2 credentials** (Web app).
-4. Add redirect URI for n8n:
+**Have an idea, a freelance project, or want to collaborate on something in AI?**
+I'm always open to collaborations, freelance work and full-time opportunities.
 
-   ```
-   http://localhost:5678/rest/oauth2-credential/callback
-   ```
+<a href="mailto:shaikhusama541@gmail.com?subject=Collaboration%20-%20InboxPilot">
+  <img src="https://img.shields.io/badge/Email-shaikhusama541%40gmail.com-36FFC7?style=for-the-badge&logo=gmail&logoColor=white&labelColor=0D1117" alt="Email"/>
+</a>
+<a href="https://www.linkedin.com/in/-usamashahid/">
+  <img src="https://img.shields.io/badge/LinkedIn-Usama%20Shahid-36FFC7?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=0D1117" alt="LinkedIn"/>
+</a>
+<a href="https://github.com/fewgets">
+  <img src="https://img.shields.io/badge/GitHub-fewgets-36FFC7?style=for-the-badge&logo=github&logoColor=white&labelColor=0D1117" alt="GitHub"/>
+</a>
 
-   *(Adjust for your n8n host/port)*
-5. In n8n, create **Gmail OAuth2 credential** with your Client ID & Secret.
-6. Connect and authorize with your Gmail account.
+<br/><br/>
 
----
+⭐ **If you like this project, please give it a star. It really helps!** ⭐
 
-### 2) Google Gemini (AI Model)
+<br/>
 
-1. Get API access for [Google AI Studio](https://aistudio.google.com/).
-2. Create an API key.
-3. In n8n, add a new credential: **Google Gemini (PaLM)**.
-4. The workflow uses `gemini-2.5-flash-lite` model for classification.
+<h3>"Your inbox should work for you, not the other way round."</h3>
 
----
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:36FFC7,55:0F3D3E,100:0D1117&height=150&section=footer&animation=twinkling" width="100%" alt="footer"/>
 
-### 3) Discord Webhook
-
-1. Open your Discord server → Go to channel settings → **Integrations → Webhooks**.
-2. Create a webhook and copy the URL.
-3. In workflow, update the **HTTP Request** node with your webhook URL.
-
----
-
-### 4) n8n Workflow Setup
-
-1. Import `inboxPilot.json` into your n8n instance.
-2. Configure all credentials: Gmail, Gemini, Discord.
-3. Adjust schedule trigger interval if needed (default: every 2 minutes).
-4. Activate the workflow.
-
----
-
-## 🚀 How It Works
-
-1. **Trigger:** Runs every 2 minutes.
-2. **Fetch Emails:** Gets the latest unread Gmail message.
-3. **AI Classification:** Gemini assigns category (otp, finance, promotional, etc.).
-4. **Logic Check:**
-
-   * If `promotional` → Email is deleted.
-   * Otherwise → Email details are formatted.
-5. **Notification:** Sends details to Discord webhook.
-
----
-
-## 📩 Contact
-
-👤 **Usama Shahid**
-📧 Email: [dev.usamashahid@gmail.com](mailto:dev.usamashahid@gmail.com)
-
-🔗 LinkedIn: [linkedin.com/in/-usamashahid](https://linkedin.com/in/-usamashahid)
-
-🐙 GitHub: [github.com/fewgets](https://github.com/fewgets)
-
-
----
-
-## 📜 License
-
-This project is for personal productivity and research use. Feel free to fork and adapt, but please credit the author 🙏
+</div>
